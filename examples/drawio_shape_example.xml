@@ -1,0 +1,37 @@
+<shape name="Dynamic Hole Example" h="80" w="80" aspect="variable" strokewidth="inherit">
+  <connections>
+    <constraint x="0.5" y="0"/>
+    <constraint x="0.5" y="1"/>
+    <constraint x="0" y="0.5"/>
+    <constraint x="1" y="0.5"/>
+  </connections>
+  <background>
+    <!-- Hauptform: Ein Kreis, der die Fill- und Line-Farbe des Shapes annimmt -->
+    <ellipse x="0" y="0" w="80" h="80"/>
+    <fillstroke/>
+  </background>
+  <foreground>
+    <!-- Stil-Stacking für das "Loch" -->
+    <save/>
+    
+    <!-- Setze die Füll- und Strichfarbe auf die "Gradient"-Farbe aus dem UI -->
+    <!-- Wenn du dies als "Loch" nutzen willst, stelle die Gradientenfarbe auf den Hintergrund deines Diagramms ein (z.B. Weiß). -->
+    <fillcolor color="gradient"/>
+    <strokecolor color="gradient"/>
+
+    <!-- Das "Loch"-Element: Ein kleineres Rechteck im Kreis -->
+    <rect x="25" y="25" w="30" h="30"/>
+    <fillstroke/>
+
+    <restore/>
+    
+    <!-- Ein kleines Quadrat, das die ursprünglichen (vererbbaren) Farben wieder annimmt, -->
+    <!-- um zu zeigen, dass der Stil-Stack korrekt zurückgesetzt wurde. -->
+    <rect x="60" y="60" w="10" h="10"/>
+    <fillstroke/>
+
+    <!-- Text-Label, das ebenfalls die Hauptfarbe des Shapes erbt und mitrotiert -->
+    <text str="Label" x="40" y="40" align="center" valign="middle" align-shape="1"/>
+
+  </foreground>
+</shape>

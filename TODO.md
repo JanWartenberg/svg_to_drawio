@@ -8,4 +8,6 @@
   - -> as API? -> provide example?
 
 - only leave files in "public API" / separate the rest?
-  - or decide that only via __init__.py?
+  - or decide that only via `__init__.py`?
+
+- example/tutorial: consider the drawio_shape_example to explain <save/>/<restore/>, color="gradient" in draw.io XML

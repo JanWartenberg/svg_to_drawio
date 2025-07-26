@@ -38,9 +38,61 @@ Will provide:
 </path>
 ```
 
+## Convert a d-string with curves
+
+```
+from drawio_converter.svg_drawio import convert_d_to_drawio_xml
+
+svg_d_string = """
+M 10 80
+C 40 10, 65 10, 95 80
+S 150 150, 180 80
+
+M 20 20
+Q 50 0, 80 20
+T 100 40
+"""
+
+drawio_xml_output = convert_d_to_drawio_xml(svg_d_string)
+print(drawio_xml_output)
+```
+
+Will provide:
+```
+<path>
+    <move x="10" y="80" />
+    <curve x1="40" y1="10" x2="65" y2="10" x3="95" y3="80" />
+    <curve x1="125" y1="150" x2="150" y2="150" x3="180" y3="80" />
+    <move x="20" y="20" />
+    <quad x1="50" y1="0" x2="80" y2="20" />
+    <quad x1="110" y1="40" x2="100" y2="40" />
+</path>
+```
+
+
+## Convert an SVG file
+Run this from project root:
+
+```
+from src import convert_svg
+
+print(convert_svg(r"examples\Example2.svg"))
+```
+
+Will print:
+```
+<path>
+        <move x="20" y="0" />
+        <curve x1="35" y1="30" x2="112.5" y2="25" x3="125" y3="50" />
+        <curve x1="137.5" y1="75" x2="55" y2="70" x3="65" y3="90" />
+</path>
+```
+Which, pasted into a draw.io shape will result in the same curve.
+
+
 # Usage hints
 
-## Prepare input SVG 
+## Prepare input SVG
 
 - Resolve objects into paths. E.g. in Inkscape select all objects and apply `Path -> Object to Path`
 - Make paths absolute, e.g. in Inkscape: `Extensions -> Modify Paths -> To absolute coordinates`
@@ -50,7 +102,7 @@ All these steps bring the input SVG "closer" to the simple format already. I can
 
 ## Insert Shape to draw.io
 
-In Draw.IO 
+In Draw.IO
 - select `Arrange > Insert > Shape`,
 - paste in the path into the template.
   However: make sure you only overwrite the path within the template. width/height still need to be adapted to your needs. Also the background probably needs to be deleted or replaced.

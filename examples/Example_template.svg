@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Example Template
+If you want to paste in some d-string and see the result. -->
+
+<svg
+   width="100mm"
+   height="100mm"
+   viewBox="0 0 100 100"
+   xmlns="http://www.w3.org/2000/svg">
+
+    <path d="" />
+
+</svg>

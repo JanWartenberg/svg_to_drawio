@@ -1,26 +1,20 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!-- Example
-to perform some automated "flattening", or trying to parse and
-convert it into the Draw IO XML format. -->
+to perform automated transformations and to parse and convert it
+into the Draw IO XML format. -->
 
 <svg
    width="200mm"
    height="100mm"
    viewBox="0 0 200 100"
-   version="1.1"
-   id="svg1"
-   
-   sodipodi:docname="Example.svg"
-   xml:space="preserve"
-   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
-   xmlns="http://www.w3.org/2000/svg"
-   xmlns:svg="http://www.w3.org/2000/svg">
+   xmlns="http://www.w3.org/2000/svg">
 
-    <g transform="rotate(90,50,50)">
-        <path transform="translate(-50,-10)" fill="none" stroke="red"
-            d="M 50,90
-            C 80,90 75,10 100,10
-            S 120,90 140,90" />
-    </g>        
+    <g transform="matrix(1 0 0.5 1 0 0)">
+        <g transform="rotate(90,50,50)">
+            <path transform="translate(-50,-10)" fill="none" stroke="red"
+                d="M 50,90
+                C 80,90 75,10 100,10
+                S 120,90 140,90" />
+        </g>
+    </g>
 </svg>

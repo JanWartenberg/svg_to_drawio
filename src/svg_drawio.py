@@ -474,16 +474,6 @@ class Path:
         return f"<path>\n\t{all_path_elems}\n{closepath}</path>"
 
 
-def split_by_chars(input_str: str, chars: str):
-    """Split an input string into list of strings,
-    split it by chars  (string that can serve as delimiters)
-    also strip it of any whitespace"""
-    elem_fragments = re.split(f"([{chars}])", input_str)
-    elem_fragments = [x for x in elem_fragments if len(x) > 0]
-    elem_fragments = [x for x in elem_fragments if x != " " and x != ","]
-    return elem_fragments
-
-
 def convert_one_path(d: str) -> Path:
     segments = normalize_path(d)
     path = Path()

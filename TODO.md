@@ -2,9 +2,12 @@
 
 - go through rest for readability
 - go through rest for further tests
+- check TODOs in test (regarding transformations)
 
 - check: remove rotate / rotate_path?  (or replace it by wrappers that call the generic transformation?)
 - normalized_to_d_path 
+  - -> as API? -> provide example?
+- merge_paths
   - -> as API? -> provide example?
 
 - only leave files in "public API" / separate the rest?

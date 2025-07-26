@@ -1,7 +1,7 @@
 # svg_to_drawio
 Python helper to convert SVG files into draw.io shapes.
 
-[DrawIO Shapes](https://www.drawio.com/doc/faq/custom-shapes) are specific templates of the diagram tool [draw io](https://www.drawio.com/).
+[draw.io Shapes](https://www.drawio.com/doc/faq/custom-shapes) are specific templates of the diagram tool [draw io](https://www.drawio.com/).
 Color styles can be applied to them. Strokewidth can be adapted within the tool.
 
 Simply importing SVG files into draw.io does not allow this. For them colors and strokewidth are fixed.
@@ -11,12 +11,13 @@ Although the draw.io XML format follows concepts similar to SVG, it has a slight
 
 # Features
 
-- Convert SVG Files to DrawIO
+- Convert SVG Files to draw.io
   - including normalizing relative paths to absolute paths
-  - including resolving transformations
-- Convert single paths, resp. "d" Attributes to DrawIO
+  - including resolving transformations (translate, rotate, matrix)
+- Convert single paths, resp. "d" Attributes to draw.io
 
-[...]
+- Example path generation
+  - (a bit unrelated, but shows how repetitve SVG patterns can be created via script using math)
 
 
 # Examples
@@ -102,7 +103,7 @@ All these steps bring the input SVG "closer" to the simple format already. I can
 
 ## Insert Shape to draw.io
 
-In Draw.IO
+In draw.io
 - select `Arrange > Insert > Shape`,
 - paste in the path into the template.
   However: make sure you only overwrite the path within the template. width/height still need to be adapted to your needs. Also the background probably needs to be deleted or replaced.
@@ -110,6 +111,6 @@ In Draw.IO
 ## References
 
 * Documentation of Custom Shapes: https://www.drawio.com/doc/faq/custom-shapes
-* There is  https://svgtodraw.io/ which looks nice at first glance. It creates a DrawIO Library, which can be a collection of shapes. But the SVG images are not converted to proper DrawIO shapes.
+* There is  https://svgtodraw.io/ which looks nice at first glance. It creates a draw.io Library, which can be a collection of shapes. But the SVG images are not converted to proper draw.io shapes.
 
 *Note: There a multiple similar projects on Github, so far I did not find one that specifically solved my problem.*

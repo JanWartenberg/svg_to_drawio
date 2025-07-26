@@ -1,7 +1,7 @@
 """
 Some methods to generate some paths / patterns programmatically.
 (e.g. some that involve repition or are based on math / geometrical formula.
- """
+"""
 
 import math
 

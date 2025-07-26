@@ -9,9 +9,13 @@ from collections import namedtuple
 from typing import Any, List
 
 from svg_drawio import (
-    convert_one_path, convert_svg, normalize_path, normalized_to_d_path,
+    convert_one_path,
+    convert_svg,
+    normalize_path,
+    normalized_to_d_path,
     rotate_path,
-    Path, PathCommand
+    Path,
+    PathCommand,
 )
 
 
@@ -38,120 +42,131 @@ class TestNormalize(AssertMixin, unittest.TestCase):
         Case = namedtuple("Case", ["name", "d_path", "expected_tuple_list"])
 
         cases = [
-            Case("HorizontalVertical",
-                 "M10,10 h80 v50 l-30,20 H10 Z",
-                 [
-                     ('M', [10.0, 10.0]),
-                     ('L', [90.0, 10.0]),
-                     ('L', [90.0, 60.0]),
-                     ('L', [60.0, 80.0]),
-                     ('L', [10.0, 80.0]),
-                     ('Z', [])]
-                 ),
-            Case("Multiple H and V",
-                 "M0,0 h10 20 30 v40 50",
-                 [('M', [0, 0]),
-                  ('L', [10, 0]),
-                  ('L', [30, 0]),
-                  ('L', [60, 0]),
-                  ('L', [60, 40]),
-                  ('L', [60, 90])]
-                 ),
-            Case("Curve", "M 30,30 c 10,20 25,00 50,10",
-                 [
-                     ('M', [30.0, 30.0]),
-                     ('C', [40.0, 50.0, 55.0, 30.0, 80.0, 40.0])
-                 ]),
-            Case("Quad", "M 10, 20 q 25,-10 30,20",
-                 [
-                     ('M', [10.0, 20.0]),
-                     ('Q', [35.0, 10.0, 40.0, 40.0])
-                 ]),
-            Case("Arc", "M 6,10 a 6 4 10 1 0 8,0",
-                 [
-                     ('M', [6, 10.0]), ('A', [6, 4, 10, 1, 0, 14, 10])
-                 ]),
-            Case("implicit L", "M 10 10 20 20 30 30",
-                 [
-                     ('M', [10, 10]), ('L', [20, 20]), ('L', [30, 30])
-                 ]),
-            Case("implicit relative L", "M 10 10 m 0 5 20 30 40 40",
-                 [
-                     ('M', [10, 10]), ('M', [10, 15]),
-                     ('L', [30, 45]), ('L', [70, 85])
-                 ]),
-            Case("multiple L", "M 0 0 L 10 10 20 20 30 30",
-                 [
-                     ('M', [0, 0]), ('L', [10, 10]),
-                     ('L', [20, 20]), ('L', [30, 30])
-                 ]),
-            Case("multiple C", "M 0 0 C 1 1 2 2 3 3 4 4 5 5 6 6",
-                 [
-                     ('M', [0, 0]),
-                     ('C', [1, 1, 2, 2, 3, 3]),
-                     ('C', [4, 4, 5, 5, 6, 6])
-                 ]),
-            Case("SmoothCurve after Curve",
-                 "M 10 80 C 40 10, 65 10, 95 80 S 150 150, 180 80",
-                 [
-                     ('M', [10, 80]),
-                     ('C', [40, 10, 65, 10, 95, 80]),
-                     # Reflected control point: x1=2*95-65=125, y1=2*80-10=150
-                     ('C', [125, 150, 150, 150, 180, 80])
-                 ]),
-            Case("SmoothCurve without preceding Curve",
-                 "M 10 80 S 150 150, 180 80",
-                 [
-                     ('M', [10, 80]),
-                     # No reflection, first control point is current point (10, 80)
-                     ('C', [10, 80, 150, 150, 180, 80])
-                 ]),
-            Case("relative SmoothCurve",
-                 "m 10 80 c 30 -70, 55 -70, 85 0 s 55 70, 85 0",
-                 [
-                     ('M', [10, 80]),
-                     ('C', [40, 10, 65, 10, 95, 80]),
-                     # Reflected: x1=2*95-65=125, y1=2*80-10=150
-                     # Relative s: x2=95+55=150, y2=80+70=150, x=95+85=180, y=80+0=80
-                     ('C', [125, 150, 150, 150, 180, 80])
-                 ]),
-            Case("minus, without space", "M 50 50 L 10-5",
-                 [
-                     ('M', [50, 50]),
-                     ('L', [10, -5])
-                 ]),
-            Case("scientific", "M 50 50 L 100 1E2",
-                 [
-                     ('M', [50, 50]),
-                     ('L', [100, 100])
-                 ]),
-            Case("scientific2", "M 50 50 l -0.1 1E-2 ",
-                 [
-                     ('M', [50, 50]),
-                     ('L', [49.9, 50.01])
-                 ]),
-            Case("scientific3, preceding comma", "M .5 .5 L -.5 +.5 ",
-                 [
-                     ('M', [0.5, 0.5]),
-                     ('L', [-0.5, 0.5])
-                 ]),
-            Case("scientific4", "M 5 6 L 1e2 5 V 1E+2 L -.5e-2 33",
-                 [
-                     ('M', [5, 6]),
-                     ('L', [100, 5]),
-                     ('L', [100, 100]),
-                     ('L', [-0.005, 33])
-                 ]),
-            Case("preceding plus", "M +10 -0",
-                 [
-                     ('M', [10, 0])
-                 ]),
-            Case("superfluous white space", "M 10 10,, 20 20 30 30",
-                 [
-                     ('M', [10, 10]), ('L', [20, 20]), ('L', [30, 30])
-                 ]),
+            Case(
+                "HorizontalVertical",
+                "M10,10 h80 v50 l-30,20 H10 Z",
+                [
+                    ("M", [10.0, 10.0]),
+                    ("L", [90.0, 10.0]),
+                    ("L", [90.0, 60.0]),
+                    ("L", [60.0, 80.0]),
+                    ("L", [10.0, 80.0]),
+                    ("Z", []),
+                ],
+            ),
+            Case(
+                "Multiple H and V",
+                "M0,0 h10 20 30 v40 50",
+                [
+                    ("M", [0, 0]),
+                    ("L", [10, 0]),
+                    ("L", [30, 0]),
+                    ("L", [60, 0]),
+                    ("L", [60, 40]),
+                    ("L", [60, 90]),
+                ],
+            ),
+            Case(
+                "Curve",
+                "M 30,30 c 10,20 25,00 50,10",
+                [("M", [30.0, 30.0]), ("C", [40.0, 50.0, 55.0, 30.0, 80.0, 40.0])],
+            ),
+            Case(
+                "Quad",
+                "M 10, 20 q 25,-10 30,20",
+                [("M", [10.0, 20.0]), ("Q", [35.0, 10.0, 40.0, 40.0])],
+            ),
+            Case(
+                "Arc",
+                "M 6,10 a 6 4 10 1 0 8,0",
+                [("M", [6, 10.0]), ("A", [6, 4, 10, 1, 0, 14, 10])],
+            ),
+            Case(
+                "implicit L",
+                "M 10 10 20 20 30 30",
+                [("M", [10, 10]), ("L", [20, 20]), ("L", [30, 30])],
+            ),
+            Case(
+                "implicit relative L",
+                "M 10 10 m 0 5 20 30 40 40",
+                [("M", [10, 10]), ("M", [10, 15]), ("L", [30, 45]), ("L", [70, 85])],
+            ),
+            Case(
+                "multiple L",
+                "M 0 0 L 10 10 20 20 30 30",
+                [("M", [0, 0]), ("L", [10, 10]), ("L", [20, 20]), ("L", [30, 30])],
+            ),
+            Case(
+                "multiple C",
+                "M 0 0 C 1 1 2 2 3 3 4 4 5 5 6 6",
+                [("M", [0, 0]), ("C", [1, 1, 2, 2, 3, 3]), ("C", [4, 4, 5, 5, 6, 6])],
+            ),
+            Case(
+                "SmoothCurve after Curve",
+                "M 10 80 C 40 10, 65 10, 95 80 S 150 150, 180 80",
+                [
+                    ("M", [10, 80]),
+                    ("C", [40, 10, 65, 10, 95, 80]),
+                    # Reflected control point: x1=2*95-65=125, y1=2*80-10=150
+                    ("C", [125, 150, 150, 150, 180, 80]),
+                ],
+            ),
+            Case(
+                "SmoothCurve without preceding Curve",
+                "M 10 80 S 150 150, 180 80",
+                [
+                    ("M", [10, 80]),
+                    # No reflection, first control point is current point (10, 80)
+                    ("C", [10, 80, 150, 150, 180, 80]),
+                ],
+            ),
+            Case(
+                "relative SmoothCurve",
+                "m 10 80 c 30 -70, 55 -70, 85 0 s 55 70, 85 0",
+                [
+                    ("M", [10, 80]),
+                    ("C", [40, 10, 65, 10, 95, 80]),
+                    # Reflected: x1=2*95-65=125, y1=2*80-10=150
+                    # Relative s: x2=95+55=150, y2=80+70=150, x=95+85=180, y=80+0=80
+                    ("C", [125, 150, 150, 150, 180, 80]),
+                ],
+            ),
+            Case(
+                "minus, without space",
+                "M 50 50 L 10-5",
+                [("M", [50, 50]), ("L", [10, -5])],
+            ),
+            Case(
+                "scientific", "M 50 50 L 100 1E2", [("M", [50, 50]), ("L", [100, 100])]
+            ),
+            Case(
+                "scientific2",
+                "M 50 50 l -0.1 1E-2 ",
+                [("M", [50, 50]), ("L", [49.9, 50.01])],
+            ),
+            Case(
+                "scientific3, preceding comma",
+                "M .5 .5 L -.5 +.5 ",
+                [("M", [0.5, 0.5]), ("L", [-0.5, 0.5])],
+            ),
+            Case(
+                "scientific4",
+                "M 5 6 L 1e2 5 V 1E+2 L -.5e-2 33",
+                [
+                    ("M", [5, 6]),
+                    ("L", [100, 5]),
+                    ("L", [100, 100]),
+                    ("L", [-0.005, 33]),
+                ],
+            ),
+            Case("preceding plus", "M +10 -0", [("M", [10, 0])]),
+            Case(
+                "superfluous white space",
+                "M 10 10,, 20 20 30 30",
+                [("M", [10, 10]), ("L", [20, 20]), ("L", [30, 30])],
+            ),
             Case("only empty", "       ", []),
-            Case("weird missing space", "L1e-2.3", [('L', [0.01, 0.3])])
+            Case("weird missing space", "L1e-2.3", [("L", [0.01, 0.3])]),
         ]
         for name, d_path, expected in cases:
             with self.subTest(name=name):
@@ -201,11 +216,13 @@ class TestNormalize(AssertMixin, unittest.TestCase):
             normalize_path("a 1 1 0 0 3 5 5")
 
     def test_de_normalize(self):
-        normalized_d = [('M', [30.0, 30.0]),
-                        ('C', [40.0, 50.0, 55.0, 30.0, 80.0, 40.0])]
+        normalized_d = [
+            ("M", [30.0, 30.0]),
+            ("C", [40.0, 50.0, 55.0, 30.0, 80.0, 40.0]),
+        ]
         self.assertEqual(
             normalized_to_d_path(normalized_d),
-            "M 30.0 30.0 C 40.0 50.0 55.0 30.0 80.0 40.0"
+            "M 30.0 30.0 C 40.0 50.0 55.0 30.0 80.0 40.0",
         )
 
 
@@ -250,21 +267,17 @@ class TestPath(AssertMixin, unittest.TestCase):
 
     def test_path_equals(self):
         p = Path()
-        p.commands = [PathCommand("M", [0, 1]),
-                      PathCommand("L", [4, 4])]
+        p.commands = [PathCommand("M", [0, 1]), PathCommand("L", [4, 4])]
         p2 = Path()
-        p2.commands = [PathCommand("M", [0, 1]),
-                       PathCommand("L", [4, 4])]
+        p2.commands = [PathCommand("M", [0, 1]), PathCommand("L", [4, 4])]
         self.assertTrue(p == p2)
 
         p3 = Path()
-        p3.commands = [PathCommand("M", [0, 1]),
-                       PathCommand("L", [4.0, 4.00000000001])]
+        p3.commands = [PathCommand("M", [0, 1]), PathCommand("L", [4.0, 4.00000000001])]
         self.assertTrue(p == p3)
 
         p4 = Path()
-        p4.commands = [PathCommand("M", [0, 1]),
-                       PathCommand("L", [4.0, 4.00001])]
+        p4.commands = [PathCommand("M", [0, 1]), PathCommand("L", [4.0, 4.00001])]
         self.assertFalse(p == p4)
 
 
@@ -296,19 +309,30 @@ class TestConvert(unittest.TestCase):
     def test_xml_mappings(self):
         Case = namedtuple("Case", ["name", "cmd", "coords", "expected_xml"])
         cases = [
-            Case("move",  "M", [7, 8], '<move x="7" y="8" />'),
-            Case("line",  "L", [1, 2], '<line x="1" y="2" />'),
+            Case("move", "M", [7, 8], '<move x="7" y="8" />'),
+            Case("line", "L", [1, 2], '<line x="1" y="2" />'),
             # counter checked this in Draw.IO and Browser
-            Case("quad", "Q", [10, 45, 30, 40],
-                 '<quad x1="10" y1="45" x2="30" y2="40" />'),
+            Case(
+                "quad",
+                "Q",
+                [10, 45, 30, 40],
+                '<quad x1="10" y1="45" x2="30" y2="40" />',
+            ),
             # counter checked this in Draw.IO and Browser
-            Case("curve", "C", [-2, 10, 3, 4, 5, 6],
-                 '<curve x1="-2" y1="10" x2="3" y2="4" x3="5" y3="6" />'),
+            Case(
+                "curve",
+                "C",
+                [-2, 10, 3, 4, 5, 6],
+                '<curve x1="-2" y1="10" x2="3" y2="4" x3="5" y3="6" />',
+            ),
             # counter checked this in Draw.IO and Browser
-            Case("arc", "A", [5.0, 6.0, 30.0, 1.0, 0.0, 100.0, 200.0],
-                 '<arc rx="5" ry="6" x-axis-rotation="30" '
-                 'large-arc-flag="1" sweep-flag="0" x="100" y="200" />'
-                 )
+            Case(
+                "arc",
+                "A",
+                [5.0, 6.0, 30.0, 1.0, 0.0, 100.0, 200.0],
+                '<arc rx="5" ry="6" x-axis-rotation="30" '
+                'large-arc-flag="1" sweep-flag="0" x="100" y="200" />',
+            ),
         ]
         for name, cmd, coords, expected_xml in cases:
             with self.subTest(name=name):
@@ -334,11 +358,12 @@ class TestTransformations(unittest.TestCase):
         self.assertEqual(
             ret,
             "M 77.071068 7.928932 L 94.748737 25.606602 L 87.677670 "
-            "32.677670 L 70.000000 15.000000 Z")
+            "32.677670 L 70.000000 15.000000 Z",
+        )
 
     def _normalize_xml(self, xml_string: str) -> str:
         """Removes whitespace between XML tags for robust comparison."""
-        return re.sub(r'>\s+<', '><', xml_string).strip()
+        return re.sub(r">\s+<", "><", xml_string).strip()
 
     def test_convert_svg_with_recursive_transforms(self):
         """

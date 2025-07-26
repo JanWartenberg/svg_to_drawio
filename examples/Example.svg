@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Example
+to perform some automated "flattening", or trying to parse and
+convert it into the Draw IO XML format. 
+
+Have a few simple example paths
+    M / L
+    maybe C or A
+    and 2-3 transforms
+-->
+
+<svg
+   width="200mm"
+   height="100mm"
+   viewBox="0 0 200 100"
+   version="1.1"
+   id="svg1"
+   
+   sodipodi:docname="Custom_Icon_Tool_V5.svg"
+   xml:space="preserve"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+    
+    <g transform="rotate(22.5,10,10)">
+        <path d="M 10,10 L 10,20 L 20,20 Z" />
+    </g>
+    
+    <path d="M 20,30 A 5,5 0,0,1 40,30 " />
+        
+    <g transform="translate(40, 20)">
+        <path d="M 20,30 A 5,5 0,0,1 40,30 " />
+        <path d="M 0,30 A 5,5 0,0,0 20,30 " />
+    </g>
+    
+    <path fill="none" stroke="red"
+        d="M 50,90
+           C 80,90 75,10 100,10
+           S 120,90 140,90" />
+        
+</svg>

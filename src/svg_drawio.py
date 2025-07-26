@@ -1,5 +1,5 @@
 """Some methods to ease the conversion of SVG paths
-to the weird and stupid Draw-IO-XML."""
+to the Draw-IO-XML shape format."""
 
 import math
 import os
@@ -497,6 +497,16 @@ def convert_one_path(d: str) -> Path:
     return path
 
 
+def convert_d_to_drawio_xml(d_string: str):
+    """
+    Converts a single SVG 'd' attribute string into a Draw.IO XML path string.
+    This function processes the path, normalizes it, and returns the XML
+    representation ready to be inserted into a Draw.IO custom shape.
+    """
+    path_obj = convert_one_path(d_string)
+    return path_obj.to_xml()
+
+
 def convert_svg(svg_input_path: str) -> str:
     """
     Takes an SVG file path, parses it recursively, applies transformations,
@@ -509,17 +519,17 @@ def convert_svg(svg_input_path: str) -> str:
         namespace = root.tag.split("}")[0][1:]
     all_paths: List[Path] = []
 
-    def get_tag(tag_name):
+    def _get_tag(tag_name):
         """Get the tag, considering namespaces."""
         return f"{{{namespace}}}{tag_name}" if namespace else tag_name
 
-    def parse_node(element, parent_transform: TransformationMatrix):
+    def _parse_node(element, parent_transform: TransformationMatrix):
         """Parse a node (recursively) and apply transformations."""
         local_transform_str = element.get("transform", "")
         local_transform = TransformationMatrix.from_string(local_transform_str)
         current_transform = parent_transform @ local_transform
 
-        if element.tag == get_tag("path"):
+        if element.tag == _get_tag("path"):
             d = element.get("d")
             if d:
                 path_obj = convert_one_path(d)
@@ -527,10 +537,10 @@ def convert_svg(svg_input_path: str) -> str:
                 all_paths.append(path_obj)
 
         for child in element:
-            parse_node(child, current_transform)
+            _parse_node(child, current_transform)
 
     # Start recursion from the root with an identity matrix
-    parse_node(root, TransformationMatrix())
+    _parse_node(root, TransformationMatrix())
 
     # Combine all collected and transformed paths into one XML string
     if not all_paths:
@@ -554,10 +564,6 @@ def main():
     # print(ret.to_xml())
 
     print(convert_svg(EXAMPLE_SVG))
-
-    # TODO
-    # go through rest for readability
-    # go through rest for further tests
 
 
 if __name__ == "__main__":

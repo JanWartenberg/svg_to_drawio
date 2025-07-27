@@ -237,54 +237,12 @@ def rotate(x, y, theta, cx, cy):
     return xr, yr
 
 
-def rotate_path(path_d, theta, cx, cy):
-    """Rotate given path.
-    path_d: d attribute of path
-    theta: angle in radians
-    cx: rotation center x
-    cy: rotation center y"""
-    # Tokenize into commands and numbers
-    tokens = re.findall(r"[MLZ]|-?\d+\.?\d*", path_d)
-
-    new_tokens = []
-    i = 0
-    while i < len(tokens):
-        t = tokens[i]
-        if t in ("M", "L"):
-            # command + two coords
-            x = float(tokens[i + 1])
-            y = float(tokens[i + 2])
-            xr, yr = rotate(x, y, theta, cx, cy)
-            new_tokens += [t, f"{xr:.6f}", f"{yr:.6f}"]
-            i += 3
-        elif t == "Z":
-            new_tokens.append("Z")
-            i += 1
-        else:
-            # shouldn't happen for well-formed M/L/Z only
-            i += 1
-
-    # Reassemble
-    d_new = " ".join(new_tokens)
-    return d_new
-
-
-ALLOWED_PC_CHARS = ["M", "L", "Q", "C", "A"]
-PC_PATHTYPE_MAP = {"M": "move", "L": "line", "Q": "quad", "C": "curve", "A": "arc"}
-PC_NUM_ELEM_MAP = {
-    "M": 2,
-    "L": 2,
-    "Q": 4,
-    "C": 6,
-    "A": 7,
-}
-PC_ATTR_MAP = {
-    "M": ["x", "y"],
-    "L": ["x", "y"],
-    "Q": ["x1", "y1", "x2", "y2"],
-    "C": ["x1", "y1", "x2", "y2", "x3", "y3"],
-    "A": ["rx", "ry", "x-axis-rotation", "large-arc-flag", "sweep-flag", "x", "y"],
-}
+def rotate_path_d(d_string: str, angle_deg: float, cx: float, cy: float) -> str:
+    """Rotates a path 'd' string around a center point."""
+    path_obj = convert_one_path(d_string)
+    matrix = TransformationMatrix.for_rotation(angle_deg, cx, cy)
+    path_obj.transform(matrix)
+    return path_obj.to_d_string()
 
 
 class TransformationMatrix:
@@ -297,6 +255,17 @@ class TransformationMatrix:
 
     def __init__(self, a=1, b=0, c=0, d=1, e=0, f=0):
         self.values = (a, b, c, d, e, f)
+
+    def for_rotation(angle_deg: float, cx: float = 0, cy: float = 0):
+        """Creates a transformation matrix for rotation around a center point."""
+        angle_rad = math.radians(angle_deg)
+        cos_a = math.cos(angle_rad)
+        sin_a = math.sin(angle_rad)
+
+        t_to_origin = TransformationMatrix(1, 0, 0, 1, -cx, -cy)
+        rotation = TransformationMatrix(cos_a, sin_a, -sin_a, cos_a, 0, 0)
+        t_back = TransformationMatrix(1, 0, 0, 1, cx, cy)
+        return t_back @ rotation @ t_to_origin
 
     def __matmul__(self, other):
         """Multiply this matrix with another (self @ other)."""
@@ -359,14 +328,31 @@ class PathCommand:
     """Proper object of an individual 'command' of a path.
     That is a 'move' or 'line' or ... component."""
 
-    def __init__(self, cmd: str, coords: List[float]):
-        if cmd not in ALLOWED_PC_CHARS:
-            raise ValueError(f"Only allowed chars: {ALLOWED_PC_CHARS}")
+    ALLOWED_CHARS = ["M", "L", "Q", "C", "A"]
+    PATHTYPE_MAP = {"M": "move", "L": "line", "Q": "quad", "C": "curve", "A": "arc"}
+    NUM_ELEM_MAP = {
+        "M": 2,
+        "L": 2,
+        "Q": 4,
+        "C": 6,
+        "A": 7,
+    }
+    ATTR_MAP = {
+        "M": ["x", "y"],
+        "L": ["x", "y"],
+        "Q": ["x1", "y1", "x2", "y2"],
+        "C": ["x1", "y1", "x2", "y2", "x3", "y3"],
+        "A": ["rx", "ry", "x-axis-rotation", "large-arc-flag", "sweep-flag", "x", "y"],
+    }
 
-        if len(coords) != PC_NUM_ELEM_MAP[cmd]:
+    def __init__(self, cmd: str, coords: List[float]):
+        if cmd not in self.ALLOWED_CHARS:
+            raise ValueError(f"Only allowed chars: {self.ALLOWED_CHARS}")
+
+        if len(coords) != self.NUM_ELEM_MAP[cmd]:
             raise ValueError(
-                f"Found {len(coords)} coordinates for {PC_PATHTYPE_MAP[cmd]}"
-                f", expected {PC_NUM_ELEM_MAP[cmd]}"
+                f"Found {len(coords)} coordinates for {self.PATHTYPE_MAP[cmd]}"
+                f", expected {self.NUM_ELEM_MAP[cmd]}"
             )
 
         self.path_type = cmd
@@ -422,10 +408,10 @@ class PathCommand:
 
     def to_xml(self):
         coords = ""
-        for attr, val in zip(PC_ATTR_MAP[self.path_type], self.coordinates):
+        for attr, val in zip(self.ATTR_MAP[self.path_type], self.coordinates):
             coords += f'{attr}="{_fmt_num(val)}" '
 
-        return f"<{PC_PATHTYPE_MAP[self.path_type]} {coords}/>"
+        return f"<{self.PATHTYPE_MAP[self.path_type]} {coords}/>"
 
 
 class Path:
@@ -441,30 +427,30 @@ class Path:
     def close(self, val):
         self._close = val
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         if not isinstance(other, self.__class__):
             return False
         if len(self.commands) != len(other.commands):
             return False
         return all([sc == oc for sc, oc in zip(self.commands, other.commands)])
 
-    def append(self, el):
+    def append(self, el) -> None:
         self.commands.append(el)
 
-    def extend(self, elems):
+    def extend(self, elems) -> None:
         self.commands.extend(elems)
 
-    def translate(self, x, y):
+    def translate(self, x, y) -> None:
         """Translates the entire path."""
         matrix = TransformationMatrix(1, 0, 0, 1, x, y)
         self.transform(matrix)
 
-    def transform(self, matrix: TransformationMatrix):
+    def transform(self, matrix: TransformationMatrix) -> None:
         """Applies a transformation matrix to all commands in the path."""
         for command in self.commands:
             command.transform(matrix)
 
-    def to_xml(self):
+    def to_xml(self) -> str:
         if self.close:
             closepath = "\t<close/>\n"
         else:
@@ -472,6 +458,17 @@ class Path:
         all_path_elems = [pe.to_xml() for pe in self.commands]
         all_path_elems = "\n\t".join(all_path_elems)
         return f"<path>\n\t{all_path_elems}\n{closepath}</path>"
+
+    def to_d_string(self) -> str:
+        """Converts Path object back to an SVG d attribute string."""
+        d_parts = []
+        for command in self.commands:
+            coords_str = " ".join([_fmt_num(c) for c in command.coordinates])
+            d_parts.append(f"{command.path_type} {coords_str}")
+        d_str = " ".join(d_parts)
+        if self.close:
+            d_str += " Z"
+        return d_str
 
 
 def convert_one_path(d: str) -> Path:

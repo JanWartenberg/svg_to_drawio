@@ -1,9 +1,9 @@
-import math
 import numbers
 import os
 import re
 import tempfile
 import unittest
+import xml.etree.ElementTree as ET
 
 from collections import namedtuple
 from typing import Any, List
@@ -13,7 +13,7 @@ from svg_drawio import (
     convert_svg,
     normalize_path,
     normalized_to_d_path,
-    rotate_path,
+    rotate_path_d,
     Path,
     PathCommand,
 )
@@ -35,6 +35,71 @@ class AssertMixin:
                 self.assertNestedAlmostEqual(ai, bi)
         else:
             self.assertEqual(a, b)
+
+    def _normalize_xml(self, xml_string: str) -> str:
+        """Removes whitespace between XML tags for robust comparison."""
+        return re.sub(r">\s+<", "><", xml_string).strip()
+
+    def assertXmlPathsAlmostEqual(
+        self, actual_xml: str, expected_xml: str, places: int = 5
+    ):
+        """
+        Asserts that two Draw.IO XML path strings are almost equal.
+        It parses the XML and compares tags and numeric attribute values.
+        """
+        # if they are identical, save the work
+        if self._normalize_xml(actual_xml) == self._normalize_xml(expected_xml):
+            return
+
+        try:
+            actual_root = ET.fromstring(actual_xml)
+            expected_root = ET.fromstring(expected_xml)
+        except ET.ParseError as e:
+            self.fail(
+                f"XML parsing failed: {e}\nActual: {actual_xml}\nExpected: {
+                    expected_xml
+                }"
+            )
+
+        # Get all path commands (<move>, <line>, etc.)
+        actual_cmds = list(actual_root)
+        expected_cmds = list(expected_root)
+
+        self.assertEqual(
+            len(actual_cmds),
+            len(expected_cmds),
+            f"Different number of path commands. "
+            f"Actual: {len(actual_cmds)}, Expected: {len(expected_cmds)}",
+        )
+
+        for i, (actual_cmd, expected_cmd) in enumerate(zip(actual_cmds, expected_cmds)):
+            # Compare command type (e.g., 'move' vs 'line')
+            self.assertEqual(
+                actual_cmd.tag,
+                expected_cmd.tag,
+                f"Command #{i + 1} has different type. "
+                f"Actual: <{actual_cmd.tag}>, Expected: <{expected_cmd.tag}>",
+            )
+
+            # Compare attributes
+            self.assertEqual(
+                actual_cmd.attrib.keys(),
+                expected_cmd.attrib.keys(),
+                f"Command <{actual_cmd.tag}> has different attributes.",
+            )
+
+            for attr_name in actual_cmd.attrib:
+                actual_val = float(actual_cmd.attrib[attr_name])
+                expected_val = float(expected_cmd.attrib[attr_name])
+                self.assertAlmostEqual(
+                    actual_val,
+                    expected_val,
+                    places=places,
+                    msg=(
+                        f"Mismatch in command <{actual_cmd.tag}>, "
+                        f"attribute '{attr_name}'"
+                    ),
+                )
 
 
 class TestNormalize(AssertMixin, unittest.TestCase):
@@ -280,6 +345,15 @@ class TestPath(AssertMixin, unittest.TestCase):
         p4.commands = [PathCommand("M", [0, 1]), PathCommand("L", [4.0, 4.00001])]
         self.assertFalse(p == p4)
 
+    def test_to_d_str(self):
+        pc1 = PathCommand("M", [0, 1])
+        p = Path()
+        p.commands = [pc1]
+        self.assertEqual(p.to_d_string(), "M 0 1")
+
+        p.close = True
+        self.assertEqual(p.to_d_string(), "M 0 1 Z")
+
 
 class TestConvert(unittest.TestCase):
     def test_convert_one(self):
@@ -340,30 +414,19 @@ class TestConvert(unittest.TestCase):
                 self.assertEqual(pc, expected_xml)
 
 
-class TestTransformations(unittest.TestCase):
-    def test_rotate(self):
-        # TODO
-        # integrate it into Path/PathCommand classes
-        # we could extend this, that a string containing the whole <path ...>
-        # is given and parsed for its transformation type + parameters
-        # Original path data & rotation center/angle
-        ROTATION_D_ORIG = "M 70 5 L 95 5 L 95 15 L 70 15 Z"
-
-        cx, cy = 70, 15
-        theta = math.radians(45)  # π/4
-        ret = rotate_path(ROTATION_D_ORIG, theta, cx, cy)
-
-        # TODO better to create an assertPathAlmostEqual
-        #  probably even as part of the classes
-        self.assertEqual(
-            ret,
-            "M 77.071068 7.928932 L 94.748737 25.606602 L 87.677670 "
-            "32.677670 L 70.000000 15.000000 Z",
+class TestTransformations(AssertMixin, unittest.TestCase):
+    def test_rotate_path_d(self):
+        orig = "M 70 5 L 95 5 L 95 15 L 70 15 Z"
+        expected_d = (
+            "M 77.071068 7.928932 L 94.748737 25.606602 "
+            + "L 87.677670 32.677670 L 70.000000 15.000000 Z"
         )
+        expected_path = convert_one_path(expected_d)
 
-    def _normalize_xml(self, xml_string: str) -> str:
-        """Removes whitespace between XML tags for robust comparison."""
-        return re.sub(r">\s+<", "><", xml_string).strip()
+        ret = rotate_path_d(orig, 45, 70, 15)
+        ret_path = convert_one_path(ret)
+
+        self.assertEqual(ret_path, expected_path)
 
     def test_convert_svg_with_recursive_transforms(self):
         """
@@ -405,16 +468,12 @@ class TestTransformations(unittest.TestCase):
             mode="w", suffix=".svg", delete=False, encoding="utf-8"
         ) as tmp:
             tmp.write(svg_content)
-            tmp_path = tmp.name  # Get the path to the temp file
+            tmp_path = tmp.name
 
         try:
             actual_xml = convert_svg(tmp_path)
 
-            # Normalize both strings to ignore whitespace differences
-            normalized_actual = self._normalize_xml(actual_xml)
-            normalized_expected = self._normalize_xml(expected_xml)
-
-            self.assertEqual(normalized_actual, normalized_expected)
+            self.assertXmlPathsAlmostEqual(actual_xml, expected_xml)
         finally:
             os.remove(tmp_path)  # delete even if test fails
 
